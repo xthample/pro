@@ -4,10 +4,13 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(400).json({ error: 'API Key is missing' });
+  
+  // Jika ini gagal, maka muncul error 400
+  if (!authHeader || authHeader === 'null' || authHeader === 'undefined') {
+    return res.status(400).json({ error: 'API Key is missing. Please enter it in the UI.' });
+  }
 
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -15,14 +18,18 @@ export default async function handler(req, res) {
       headers: {
         'Authorization': authHeader.startsWith('Bearer ') ? authHeader : `Bearer ${authHeader}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://clipper-pro.vercel.app',
-        'X-Title': 'Clipper Pro'
       },
       body: JSON.stringify(req.body),
     });
 
     const data = await response.json();
-    return res.status(response.status).json(data);
+    
+    if (!response.ok) {
+      // Mengirim pesan error asli dari OpenRouter (misal: saldo habis atau model salah)
+      return res.status(response.status).json(data);
+    }
+
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
