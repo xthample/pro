@@ -727,62 +727,34 @@ async function processVideo() {
   addHistory(url);
   startProcessing();
 
-  const prompt = `Kamu adalah ahli konten viral short-form video.
-
-Analisis video dari URL: ${url}
-
-Buat PERSIS ${count} rekomendasi clip viral untuk format ${format}, durasi maksimal ${duration} detik.
-Gunakan ${lang}.
-
-Balas HANYA dengan JSON valid berikut (tanpa markdown, tanpa backtick, tanpa teks lain):
-{
-  "summary": "ringkasan video 2 kalimat",
-  "analysis": "mengapa konten ini cocok untuk shorts",
-  "clips": [
-    {
-      "id": 1,
-      "title": "judul clip catchy maks 10 kata",
-      "startTime": "00:01:23",
-      "endTime": "00:02:10",
-      "duration": 47,
-      "type": "viral",
-      "viralScore": 91,
-      "hook": "kalimat pembuka yang menarik perhatian",
-      "caption": "caption untuk sosial media dengan emoji",
-      "hashtags": ["#viral","#shorts","#trending"],
-      "platform": "YouTube Shorts"
-    }
-  ]
-}
-type harus salah satu: viral, educational, entertainment
-viralScore: integer 60-99`;
+  const prompt = `Kamu adalah ahli konten viral short-form video. Analisis video dari URL: ${url}. Buat PERSIS ${count} rekomendasi clip viral untuk format ${format}, durasi maksimal ${duration} detik. Gunakan ${lang}. Balas HANYA dengan JSON valid.`;
 
   try {
-    // Detect if running on Vercel (use proxy) or local (direct call)
-    const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const endpoint = isLocal
-      ? 'https://openrouter.ai/api/v1/chat/completions'
-      : '/api/chat';
+    const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost';
+    const endpoint = isLocal ? 'https://openrouter.ai/api/v1/chat/completions' : '/api/chat';
 
-    const headers = { 'Content-Type': 'application/json' };
+    // PERBAIKAN: Header Authorization harus selalu dikirim
+    const headers = { 
+      'Content-Type': 'application/json',
+      'Authorization': apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`
+    };
+
     const body = {
       model: selectedModel,
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 2500,
-      temperature: 0.85,
+      temperature: 0.85
     };
 
-    // Direct call needs auth header (local only)
-    if (isLocal) {
-      headers['Authorization'] = `Bearer ${apiKey}`;
-      headers['HTTP-Referer'] = window.location.href;
-      headers['X-Title'] = 'Clipper Pro';
-    }
+    const res = await fetch(endpoint, { 
+      method: 'POST', 
+      headers: headers, // Memastikan header terkirim
+      body: JSON.stringify(body) 
+    });
 
-    const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || `Server error ${res.status}`);
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error?.message || `Server error ${res.status}`);
     }
 
     const data = await res.json();
@@ -805,7 +777,7 @@ viralScore: integer 60-99`;
   } catch (err) {
     stopProcessing();
     showToast('Gagal: ' + err.message, 'error');
-    console.error(err);
+    console.error('Process Error:', err);
   }
 }
 
