@@ -62,7 +62,7 @@
 </div>
 
 <script>
-    let key = localStorage.getItem('cp_key') || '';
+   let key = localStorage.getItem('cp_key') || '';
     if(!key) document.getElementById('apiSection').style.display = 'block';
 
     function saveKey() {
@@ -72,67 +72,66 @@
         alert('API Key tersimpan!');
     }
 
-    function toggleApi() {
-        const s = document.getElementById('apiSection');
-        s.style.display = s.style.display === 'none' ? 'block' : 'none';
-    }
-
     async function runAI() {
-        const url = document.getElementById('videoUrl').value;
-        if(!url || !key) return alert('Lengkapi Data!');
+        const urlInput = document.getElementById('videoUrl').value;
+        if(!urlInput || !key) return alert('Lengkapi Data!');
+
+        // Ekstrak ID YouTube untuk pemutar video
+        const videoId = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/)?.[1];
 
         const btn = document.getElementById('genBtn');
         const status = document.getElementById('status');
         btn.disabled = true;
         status.style.display = 'block';
 
-        // PROMPT FIX: Memaksa AI memberikan data asli video, bukan halusinasi
-        const prompt = `Analisis secara mendalam video YouTube ini: ${url}. 
-        Tugas Anda:
-        1. Identifikasi topik asli video (Jangan berhalusinasi).
-        2. Buat 3 clip viral dalam format JSON.
-        3. Gunakan Bahasa ${document.getElementById('lang').value}.
-        Format Output: {"summary": "...", "clips": [{"title": "...", "start": "00:10", "end": "00:40", "score": 95}]}`;
+        // PROMPT ANTI-HALUSINASI: Memaksa AI melihat URL secara harfiah
+        const prompt = `URL VIDEO: ${urlInput}
+        Tugas Kritis:
+        1. Anda adalah asisten riset konten. JANGAN MENGARANG.
+        2. Identifikasi SUBJEK ASLI video dari URL tersebut 
+        3. Jika tidak yakin, fokus pada metadata yang mungkin ada pada URL.
+        4. Buat 3 segmen lucu/penting dalam JSON.
+        5. Bahasa: ${document.getElementById('lang').value}.
+        Format: {"summary": "...", "clips": [{"title": "...", "t": "detik_mulai", "dur": "durasi", "score": 95}]}`;
 
         try {
             const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${key}`,
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: document.getElementById('model').value,
-                    messages: [{role: 'user', content: prompt}]
+                    messages: [{role: 'user', content: prompt}],
+                    temperature: 0.1 // Rendah agar tidak mengarang
                 })
             });
 
             const data = await res.json();
             const content = data.choices[0].message.content;
-            
-            // Parsing JSON dengan Regex agar aman dari teks tambahan AI
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             const parsed = JSON.parse(jsonMatch[0]);
 
-            renderClips(parsed.clips);
+            renderClips(parsed.clips, videoId);
         } catch (e) {
-            console.error(e);
-            alert('Gagal mengambil data. Pastikan API Key valid.');
+            alert('Error: AI Gagal menganalisis.');
         } finally {
             btn.disabled = false;
             status.style.display = 'none';
         }
     }
 
-    function renderClips(clips) {
+    function renderClips(clips, vId) {
         const container = document.getElementById('clipsContainer');
         container.innerHTML = clips.map(c => `
             <div class="clip-card">
-                <div class="clip-thumb">🎬</div>
+                <div class="clip-thumb">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${vId}?start=${c.t}" frameborder="0" allowfullscreen></iframe>
+                </div>
                 <div class="clip-info">
-                    <div class="clip-time">${c.start} - ${c.end}</div>
-                    <div style="font-weight:bold; margin-top:5px;">${c.title}</div>
-                    <div style="font-size:12px; color:var(--green); margin-top:5px;">Viral Score: ${c.score}%</div>
+                    <div style="font-weight:bold;">${c.title}</div>
+                    <p style="font-size:11px; color:var(--text3); margin:5px 0;">Mulai pada detik ke: ${c.t}</p>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <a href="https://www.ssyoutube.com/watch?v=${vId}" target="_blank" class="btn btn-accent" style="font-size:10px; padding:5px 10px;">Download Clip</a>
+                    </div>
                 </div>
             </div>
         `).join('');
