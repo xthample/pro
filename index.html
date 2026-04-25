@@ -1,74 +1,11 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clipper Pro — AI Video Shorts Generator</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0f; --bg2: #111118; --bg3: #18181f; --bg4: #1e1e28;
-    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
-    --text: #f0f0f5; --text2: #9090a8; --text3: #5a5a72;
-    --accent: #7c5cfc; --accent2: #a87cff;
-    --green: #22c55e; --red: #ef4444; --cyan: #06b6d4;
-    --radius: 12px; --radius-sm: 8px; --radius-lg: 18px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-  .bg-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
-  .orb1 { width: 600px; height: 600px; background: rgba(124,92,252,0.12); top: -200px; left: -200px; }
-  .orb2 { width: 400px; height: 400px; background: rgba(6,182,212,0.08); bottom: 100px; right: -100px; }
-  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
-
-  /* SIDEBAR */
-  .sidebar { width: 260px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; transition: transform 0.3s ease; }
-  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
-  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; background: linear-gradient(135deg, #a87cff, #7c5cfc, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .logo-tag { font-size: 11px; color: var(--text3); margin-top: 2px; }
-  .sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
-  .nav-label { font-size: 10px; font-weight: 500; text-transform: uppercase; color: var(--text3); padding: 8px 10px 4px; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); font-size: 14px; border: none; background: none; width: 100%; text-align: left; }
-  .nav-item:hover { background: var(--bg3); color: var(--text); }
-  .nav-item.active { background: rgba(124,92,252,0.15); color: var(--accent2); }
-  .badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 20px; }
-  .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
-  .session-info { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot.red { background: var(--red); }
-  .dot.amber { background: #f59e0b; }
-
-  /* MAIN & UI COMPONENTS */
-  .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-  .topbar { height: 60px; background: rgba(10,10,15,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; position: sticky; top: 0; z-index: 50; }
-  .topbar-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
-  .content { padding: 24px; flex: 1; }
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; border: none; transition: 0.15s; font-family: 'DM Sans', sans-serif; }
-  .btn-accent { background: var(--accent); color: #fff; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
-  .api-panel, .hero-upload, .processing-card, .ai-output { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px; }
-  .api-key-input, .url-input, .setting-select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); padding: 10px; outline: none; }
-  .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
-  
-  /* CLIPS GRID */
-  .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-  .clip-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; cursor: pointer; transition: 0.2s; }
-  .clip-card:hover { transform: translateY(-3px); border-color: var(--accent); }
-  .clip-thumb { aspect-ratio: 9/16; background: var(--bg4); position: relative; max-height: 200px; display: flex; align-items: center; justify-content: center; }
-  .clip-body { padding: 12px; }
-  .clip-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-  .tabs { display: flex; gap: 5px; margin-bottom: 20px; }
-  .tab { padding: 8px 16px; border-radius: 8px; background: var(--bg3); color: var(--text3); border: none; cursor: pointer; }
-  .tab.active { background: var(--accent); color: #fff; }
-  
-  /* SPINNER & PROGRESS */
-  .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .progress-track { background: var(--bg3); height: 6px; border-radius: 10px; overflow: hidden; margin: 10px 0; }
-  .progress-bar { background: var(--accent); height: 100%; width: 0%; transition: 0.3s; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clipper Pro — AI Video Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -76,243 +13,130 @@
 <div class="bg-orb orb2"></div>
 
 <div class="app">
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo">Clipper Pro</div>
-      <div class="logo-tag">AI-Powered Shorts Generator</div>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="nav-label">Workspace</div>
-      <button class="nav-item active">Video Shorts <span class="badge" id="clipBadge">0</span></button>
-      <div class="nav-label">Settings</div>
-      <button class="nav-item" onclick="showApiPanel()">API Configuration</button>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="session-info"><div class="dot" id="sessionDot"></div> <span id="sessionText">Memuat...</span></div>
-      <button class="btn btn-ghost btn-xs" onclick="clearSession()" style="width:100%; font-size:10px;">Reset Data</button>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="topbar"><span class="topbar-title">Dashboard</span></div>
-    <div class="content">
-      <div id="sessionBanner" class="session-banner" style="display:none; background:rgba(34,197,94,0.1); padding:10px; border-radius:8px; margin-bottom:15px;"></div>
-
-      <div class="api-panel" id="apiPanel">
-        <h3>🔑 OpenRouter API Key</h3>
-        <div style="display:flex; gap:10px; margin-top:10px;">
-          <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-or-v1-...">
-          <button class="btn btn-accent" onclick="saveApiKey()">Simpan</button>
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo">Clipper Pro</div>
         </div>
-        <div class="settings-grid">
-          <div>
-            <label style="font-size:11px; color:var(--text3)">AI Model</label>
-            <select class="setting-select" id="modelSelect" onchange="selectModel(this.value)"></select>
-          </div>
+        <nav class="sidebar-nav">
+            <button class="nav-item active">🎬 Video Generator</button>
+            <button class="nav-item" onclick="toggleApi()">🔑 API Settings</button>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <section id="apiSection" class="card" style="display:none;">
+            <h3>OpenRouter Configuration</h3>
+            <div class="input-group">
+                <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                <button class="btn btn-accent" onclick="saveKey()">Save Key</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Generate Viral Clips</h2>
+            <p style="color:var(--text2); margin-bottom:15px; font-size:14px;">Masukkan link YouTube untuk dianalisis oleh AI.</p>
+            <div class="input-group">
+                <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
+                <button class="btn btn-accent" id="genBtn" onclick="runAI()">Analyze & Generate</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <select id="model">
+                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash (Fast)</option>
+                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Accurate)</option>
+                </select>
+                <select id="lang">
+                    <option value="id">Bahasa Indonesia</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+        </section>
+
+        <div id="status" class="card" style="display:none; border-left: 4px solid var(--accent);">
+            <div id="loader" class="spinner"></div>
+            <span id="statusText">AI sedang bekerja...</span>
         </div>
-      </div>
 
-      <div class="hero-upload">
-        <h2>Input Video URL</h2>
-        <div style="display:flex; gap:10px; margin:15px 0;">
-          <input type="url" class="url-input" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
-          <button class="btn btn-accent" id="processBtn" onclick="processVideo()">Generate Clips</button>
-        </div>
-        <div class="settings-grid">
-          <div class="setting-item">
-            <label>Jumlah Clip</label>
-            <select class="setting-select" id="countSelect">
-              <option value="3">3 Clips</option>
-              <option value="5" selected>5 Clips</option>
-            </select>
-          </div>
-          <div class="setting-item">
-            <label>Bahasa</label>
-            <select class="setting-select" id="langSelect">
-              <option value="id">Indonesia</option>
-              <option value="en">English</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="processing-card" id="processingCard" style="display:none;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div class="spinner"></div>
-          <span id="procStep">Menganalisis video...</span>
-        </div>
-        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
-      </div>
-
-      <div class="ai-output" id="aiOutput" style="display:none;">
-        <h4 style="color:var(--accent2)">Analisis AI:</h4>
-        <p id="aiText" style="font-size:13px; margin-top:10px; color:var(--text2)"></p>
-      </div>
-
-      <div class="tabs">
-        <button class="tab active" onclick="filterTab('all', this)">Semua</button>
-        <button class="tab" onclick="filterTab('viral', this)">🔥 Viral</button>
-      </div>
-
-      <div class="clips-grid" id="clipsGrid"></div>
-    </div>
-  </main>
+        <div class="clips-grid" id="clipsContainer">
+            </div>
+    </main>
 </div>
 
-<div class="toast-container" id="toastContainer"></div>
-
 <script>
-const Session = {
-  KEY_APIKEY: 'cp_apikey', KEY_MODEL: 'cp_model', KEY_CLIPS: 'cp_clips',
-  set(k, v) { localStorage.setItem(k, JSON.stringify(v)); },
-  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
-  clear() { localStorage.clear(); location.reload(); }
-};
+    let key = localStorage.getItem('cp_key') || '';
+    if(!key) document.getElementById('apiSection').style.display = 'block';
 
-let apiKey = '';
-let selectedModel = 'google/gemini-2.0-flash-001';
-let clips = [];
-const MODELS = [
-  { id: 'google/gemini-2.0-flash-001', label: 'Gemini 2.0 Flash' },
-  { id: 'meta-llama/llama-3.1-8b-instruct:free', label: 'Llama 3.1 8B (Free)' }
-];
-
-function boot() {
-  apiKey = Session.get(Session.KEY_APIKEY) || '';
-  selectedModel = Session.get(Session.KEY_MODEL) || MODELS[0].id;
-  clips = Session.get(Session.KEY_CLIPS) || [];
-  
-  document.getElementById('apiKeyInput').value = apiKey;
-  const ms = document.getElementById('modelSelect');
-  ms.innerHTML = MODELS.map(m => `<option value="${m.id}" ${m.id === selectedModel ? 'selected' : ''}>${m.label}</option>`).join('');
-  
-  if (apiKey) document.getElementById('apiPanel').style.display = 'none';
-  updateSessionUI();
-  renderClips();
-}
-
-function updateSessionUI() {
-  const dot = document.getElementById('sessionDot');
-  dot.className = apiKey ? 'dot green' : 'dot amber';
-  document.getElementById('sessionText').textContent = apiKey ? 'API Aktif' : 'Masukkan API Key';
-  document.getElementById('clipBadge').textContent = clips.length;
-}
-
-function saveApiKey() {
-  const val = document.getElementById('apiKeyInput').value.trim();
-  if (!val.startsWith('sk-or')) return showToast('Format salah', 'error');
-  apiKey = val;
-  Session.set(Session.KEY_APIKEY, val);
-  document.getElementById('apiPanel').style.display = 'none';
-  updateSessionUI();
-  showToast('Tersimpan', 'success');
-}
-
-function selectModel(id) {
-  selectedModel = id;
-  Session.set(Session.KEY_MODEL, id);
-}
-
-async function processVideo() {
-  const url = document.getElementById('videoUrl').value.trim();
-  if (!url || !apiKey) return showToast('Input URL & API Key!', 'error');
-
-  const count = document.getElementById('countSelect').value;
-  const lang = document.getElementById('langSelect').value === 'id' ? 'Bahasa Indonesia' : 'English';
-  
-  document.getElementById('processingCard').style.display = 'block';
-  document.getElementById('progressBar').style.width = '30%';
-
-  const prompt = `Analisis video ini: ${url}. Berikan ${count} clip viral dalam format JSON murni: {"summary": "...", "clips": [{"title": "...", "startTime": "00:00", "endTime": "00:30", "type": "viral", "viralScore": 90}]}. Gunakan ${lang}.`;
-
-  try {
-    const isLocal = window.location.hostname === 'localhost';
-    const endpoint = isLocal ? 'https://openrouter.ai/api/v1/chat/completions' : '/api/chat';
-
-    const res = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}` 
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!res.ok) throw new Error('API Error ' + res.status);
-    
-    document.getElementById('progressBar').style.width = '80%';
-    const data = await res.json();
-    const raw = data.choices[0].message.content;
-    
-    let parsed;
-    try {
-      const jsonMatch = raw.match(/\{[\s\S]*\}/);
-      parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
-    } catch (e) {
-      throw new Error("Gagal parsing JSON AI");
+    function saveKey() {
+        key = document.getElementById('apiKey').value;
+        localStorage.setItem('cp_key', key);
+        document.getElementById('apiSection').style.display = 'none';
+        alert('API Key tersimpan!');
     }
 
-    if (parsed.clips) {
-      appendClips(parsed.clips, url);
-      renderAI(parsed.summary || "Berhasil dianalisis.");
+    function toggleApi() {
+        const s = document.getElementById('apiSection');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
     }
-    
-    document.getElementById('progressBar').style.width = '100%';
-    setTimeout(() => document.getElementById('processingCard').style.display = 'none', 500);
-    showToast('Berhasil!', 'success');
-  } catch (err) {
-    document.getElementById('processingCard').style.display = 'none';
-    showToast(err.message, 'error');
-  }
-}
 
-function appendClips(newClips, sourceUrl) {
-  const tagged = newClips.map((c, i) => ({
-    ...c, _id: Date.now() + i, _url: sourceUrl
-  }));
-  clips = [...tagged, ...clips];
-  Session.set(Session.KEY_CLIPS, clips);
-  renderClips();
-  updateSessionUI();
-}
+    async function runAI() {
+        const url = document.getElementById('videoUrl').value;
+        if(!url || !key) return alert('Lengkapi Data!');
 
-function renderClips() {
-  const grid = document.getElementById('clipsGrid');
-  grid.innerHTML = clips.length ? clips.map(c => `
-    <div class="clip-card">
-      <div class="clip-thumb">🎬 <span style="position:absolute; bottom:5px; right:5px; font-size:10px; background:#000; padding:2px;">${c.startTime}</span></div>
-      <div class="clip-body">
-        <div class="clip-title">${c.title}</div>
-        <div style="font-size:11px; color:var(--accent2)">Score: ${c.viralScore}</div>
-      </div>
-    </div>
-  `).join('') : '<p style="color:var(--text3)">Belum ada clip.</p>';
-}
+        const btn = document.getElementById('genBtn');
+        const status = document.getElementById('status');
+        btn.disabled = true;
+        status.style.display = 'block';
 
-function renderAI(txt) {
-  document.getElementById('aiOutput').style.display = 'block';
-  document.getElementById('aiText').textContent = txt;
-}
+        // PROMPT FIX: Memaksa AI memberikan data asli video, bukan halusinasi
+        const prompt = `Analisis secara mendalam video YouTube ini: ${url}. 
+        Tugas Anda:
+        1. Identifikasi topik asli video (Jangan berhalusinasi).
+        2. Buat 3 clip viral dalam format JSON.
+        3. Gunakan Bahasa ${document.getElementById('lang').value}.
+        Format Output: {"summary": "...", "clips": [{"title": "...", "start": "00:10", "end": "00:40", "score": 95}]}`;
 
-function showToast(msg, type) {
-  const t = document.createElement('div');
-  t.style.cssText = `position:fixed; bottom:20px; right:20px; background:${type==='error'?'#ef4444':'#22c55e'}; padding:10px 20px; border-radius:8px; z-index:9999;`;
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
+        try {
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${key}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: document.getElementById('model').value,
+                    messages: [{role: 'user', content: prompt}]
+                })
+            });
 
-function showApiPanel() { document.getElementById('apiPanel').style.display = 'block'; }
-function clearSession() { if(confirm('Hapus semua?')) Session.clear(); }
-function filterTab(t, el) { 
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  el.classList.add('active');
-}
+            const data = await res.json();
+            const content = data.choices[0].message.content;
+            
+            // Parsing JSON dengan Regex agar aman dari teks tambahan AI
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            const parsed = JSON.parse(jsonMatch[0]);
 
-boot();
+            renderClips(parsed.clips);
+        } catch (e) {
+            console.error(e);
+            alert('Gagal mengambil data. Pastikan API Key valid.');
+        } finally {
+            btn.disabled = false;
+            status.style.display = 'none';
+        }
+    }
+
+    function renderClips(clips) {
+        const container = document.getElementById('clipsContainer');
+        container.innerHTML = clips.map(c => `
+            <div class="clip-card">
+                <div class="clip-thumb">🎬</div>
+                <div class="clip-info">
+                    <div class="clip-time">${c.start} - ${c.end}</div>
+                    <div style="font-weight:bold; margin-top:5px;">${c.title}</div>
+                    <div style="font-size:12px; color:var(--green); margin-top:5px;">Viral Score: ${c.score}%</div>
+                </div>
+            </div>
+        `).join('');
+    }
 </script>
 </body>
 </html>
