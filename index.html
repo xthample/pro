@@ -3,119 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clipper Pro — AI Video Generator</title>
+    <title>Clipper Pro V4 — Universal AI Scout</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="bg-orb orb1"></div>
-<div class="bg-orb orb2"></div>
+<div class="card">
+    <h2 style="font-size: 24px; margin-bottom: 5px;">🔍 Universal Content Scout</h2>
+    <p style="color: var(--text-dim); font-size: 14px;">Masukkan link YouTube apa pun (Podcast, Gaming, Edukasi, dll).</p>
+    
+    <div class="input-group">
+        <input type="url" id="videoUrl" placeholder="Tempel link YouTube di sini...">
+        <button class="btn" id="genBtn" onclick="runAI()">Analyze Content</button>
+    </div>
 
-<div class="app">
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo">Clipper Pro</div>
-        </div>
-        <nav class="sidebar-nav">
-            <button class="nav-item active">🎬 Video Generator</button>
-            <button class="nav-item" onclick="toggleApi()">🔑 API Settings</button>
-        </nav>
-    </aside>
-
-    <main class="main">
-        <section id="apiSection" class="card" style="display:none;">
-            <h3>OpenRouter Configuration</h3>
-            <div class="input-group">
-                <input type="password" id="apiKey" placeholder="sk-or-v1-...">
-                <button class="btn btn-accent" onclick="saveKey()">Save Key</button>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Generate Viral Clips</h2>
-            <p style="color:var(--text2); margin-bottom:15px; font-size:14px;">Masukkan link YouTube untuk dianalisis oleh AI.</p>
-            <div class="input-group">
-                <input type="url" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
-                <button class="btn btn-accent" id="genBtn" onclick="runAI()">Analyze & Generate</button>
-            </div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                <select id="model">
-                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash (Fast)</option>
-                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Accurate)</option>
-                </select>
-                <select id="lang">
-                    <option value="id">Bahasa Indonesia</option>
-                    <option value="en">English</option>
-                </select>
-            </div>
-        </section>
-
-        <div id="status" class="card" style="display:none; border-left: 4px solid var(--accent);">
-            <div id="loader" class="spinner"></div>
-            <span id="statusText">AI sedang bekerja...</span>
-        </div>
-
-        <div class="clips-grid" id="clipsContainer">
-            </div>
-    </main>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <select id="model" style="max-width: 300px;">
+            <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Deep Analysis)</option>
+            <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash (Fastest)</option>
+        </select>
+        <span style="font-size: 12px; color: var(--text-dim);">⏱ Durasi: 30s - 60s per clip</span>
+    </div>
 </div>
 
+<div id="status" style="display:none; text-align:center; padding: 20px; color: var(--accent2); font-weight: bold;">
+    AI sedang membedah isi video dan mencari momen terbaik...
+</div>
+
+<div class="clips-grid" id="clipsContainer"></div>
+
 <script>
-   let key = localStorage.getItem('cp_key') || '';
-    if(!key) document.getElementById('apiSection').style.display = 'block';
-
-    function saveKey() {
-        key = document.getElementById('apiKey').value;
-        localStorage.setItem('cp_key', key);
-        document.getElementById('apiSection').style.display = 'none';
-        alert('API Key tersimpan!');
-    }
-
     async function runAI() {
         const urlInput = document.getElementById('videoUrl').value;
-        if(!urlInput || !key) return alert('Lengkapi Data!');
+        const key = localStorage.getItem('cp_apikey'); // Mengambil key dari session Clipper Pro
+        
+        if(!urlInput) return alert('Masukkan link YouTube dulu bro!');
+        if(!key) return alert('API Key belum di-set di pengaturan!');
 
-        // Ekstrak ID YouTube untuk pemutar video
+        // Regex untuk ambil ID YouTube
         const videoId = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/)?.[1];
-
+        if(!videoId) return alert('Link YouTube tidak valid!');
+        
         const btn = document.getElementById('genBtn');
-        const status = document.getElementById('status');
         btn.disabled = true;
-        status.style.display = 'block';
+        document.getElementById('status').style.display = 'block';
+        const container = document.getElementById('clipsContainer');
+        container.innerHTML = '';
 
-        // PROMPT ANTI-HALUSINASI: Memaksa AI melihat URL secara harfiah
-        const prompt = `URL VIDEO: ${urlInput}
-        Tugas Kritis:
-        1. Anda adalah asisten riset konten. JANGAN MENGARANG.
-        2. Identifikasi SUBJEK ASLI video dari URL tersebut 
-        3. Jika tidak yakin, fokus pada metadata yang mungkin ada pada URL.
-        4. Buat 3 segmen lucu/penting dalam JSON.
-        5. Bahasa: ${document.getElementById('lang').value}.
-        Format: {"summary": "...", "clips": [{"title": "...", "t": "detik_mulai", "dur": "durasi", "score": 95}]}`;
+        // UNIVERSAL PROMPT (Anti-Sule/Anti-Lyodra bias)
+        const prompt = `Lupakan semua topik sebelumnya. Analisis secara mentah URL ini: ${urlInput}
+        
+        INSTRUKSI KHUSUS:
+        1. Identifikasi topik ASLI dari video tersebut (Apapun jenis kontennya).
+        2. Cari 3 momen dengan "HOOK" terkuat (kejadian paling menarik perhatian di awal segmen).
+        3. Setiap segmen HARUS memiliki durasi minimal 30 detik dan maksimal 60 detik.
+        4. Buat JUDUL SEO yang kuat untuk platform Shorts/TikTok.
+        
+        OUTPUT FORMAT (JSON SAJA):
+        {
+          "clips": [
+            {
+              "title": "Judul SEO Viral",
+              "start": 10,
+              "end": 55,
+              "hook_reason": "Kenapa momen ini dipilih sebagai hook?"
+            }
+          ]
+        }`;
 
         try {
             const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+                headers: { 
+                    'Authorization': `Bearer ${key}`, 
+                    'Content-Type': 'application/json' 
+                },
                 body: JSON.stringify({
                     model: document.getElementById('model').value,
                     messages: [{role: 'user', content: prompt}],
-                    temperature: 0.1 // Rendah agar tidak mengarang
+                    temperature: 0.1 // Temperatur rendah agar AI tidak mengarang bebas
                 })
             });
 
             const data = await res.json();
             const content = data.choices[0].message.content;
+            
+            // Parsing aman dengan regex
             const jsonMatch = content.match(/\{[\s\S]*\}/);
             const parsed = JSON.parse(jsonMatch[0]);
 
             renderClips(parsed.clips, videoId);
         } catch (e) {
-            alert('Error: AI Gagal menganalisis.');
+            console.error(e);
+            alert('Gagal memproses video. Pastikan link bisa diakses atau coba lagi.');
         } finally {
             btn.disabled = false;
-            status.style.display = 'none';
+            document.getElementById('status').style.display = 'none';
         }
     }
 
@@ -123,19 +107,30 @@
         const container = document.getElementById('clipsContainer');
         container.innerHTML = clips.map(c => `
             <div class="clip-card">
-                <div class="clip-thumb">
-                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${vId}?start=${c.t}" frameborder="0" allowfullscreen></iframe>
+                <div class="video-container">
+                    <iframe width="100%" height="100%" 
+                        src="https://www.youtube.com/embed/${vId}?start=${c.start}&end=${c.end}&rel=0" 
+                        frameborder="0" allowfullscreen>
+                    </iframe>
                 </div>
                 <div class="clip-info">
-                    <div style="font-weight:bold;">${c.title}</div>
-                    <p style="font-size:11px; color:var(--text3); margin:5px 0;">Mulai pada detik ke: ${c.t}</p>
-                    <div style="display:flex; gap:5px; margin-top:10px;">
-                        <a href="https://www.ssyoutube.com/watch?v=${vId}" target="_blank" class="btn btn-accent" style="font-size:10px; padding:5px 10px;">Download Clip</a>
+                    <span class="badge-seo">SEO Optimized</span>
+                    <div style="font-weight:bold; font-size:17px; margin-bottom: 10px;">${c.title}</div>
+                    <div style="font-size:12px; color:var(--text-dim);">
+                        ⏱ <b>Durasi:</b> ${c.end - c.start} detik (${c.start}s - ${c.end}s)
                     </div>
+                    <div class="hook-text">
+                        <b>Hook:</b> ${c.hook_reason}
+                    </div>
+                    <a href="https://www.ssyoutube.com/watch?v=${vId}" target="_blank" class="btn" 
+                       style="display:block; text-align:center; margin-top:20px; font-size:13px; text-decoration:none;">
+                       Download Link
+                    </a>
                 </div>
             </div>
         `).join('');
     }
 </script>
+
 </body>
 </html>
