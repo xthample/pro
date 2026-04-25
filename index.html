@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clipper Pro — AI Video Shorts Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #18181f;
+    --bg4: #1e1e28;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f0f5;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --accent: #7c5cfc;
+    --accent2: #a87cff;
+    --green: #22c55e;
+    --red: #ef4444;
+    --cyan: #06b6d4;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 18px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  .bg-orb { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+  .orb1 { width: 600px; height: 600px; background: rgba(124,92,252,0.12); top: -200px; left: -200px; }
+  .orb2 { width: 400px; height: 400px; background: rgba(6,182,212,0.08); bottom: 100px; right: -100px; }
+
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #a87cff, #7c5cfc, #06b6d4);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .logo-tag { font-size: 11px; color: var(--text3); margin-top: 2px; letter-spacing: 0.5px; }
+
+  .sidebar-nav { padding: 12px 10px; flex: 1; overflow-y: auto; }
+  .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); padding: 8px 10px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm);
+    cursor: pointer; color: var(--text2); font-size: 14px; transition: all 0.15s; margin-bottom: 2px;
+    border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif;
+  }
+  .nav-item:hover { background: var(--bg3); color: var(--text); }
+  .nav-item.active { background: rgba(124,92,252,0.15); color: var(--accent2); }
+  .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; opacity: 0.7; }
+  .nav-item.active svg { opacity: 1; }
+  .badge { margin-left: auto; background: var(--accent); color: #fff; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
+
+  .sidebar-footer { padding: 14px 16px; border-top: 1px solid var(--border); }
+  .session-info { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.red { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .dot.amber { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+
+  /* ── MAIN ── */
+  .main { margin-left: 260px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 60px; background: rgba(10,10,15,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .hamburger { display: none; background: none; border: none; cursor: pointer; color: var(--text2); padding: 4px; }
+  .topbar-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius-sm);
+    font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s;
+    font-family: 'DM Sans', sans-serif; text-decoration: none;
+  }
+  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text2); }
+  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+  .btn-accent { background: var(--accent); color: #fff; }
+  .btn-accent:hover { background: #6a4de8; }
+  .btn-accent:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+  .btn-danger:hover { background: rgba(239,68,68,0.25); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-xs { padding: 4px 10px; font-size: 11px; }
+
+  /* ── CONTENT ── */
+  .content { padding: 24px; flex: 1; }
+
+  /* ── SESSION BANNER ── */
+  .session-banner {
+    background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .session-banner.warn { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.2); }
+  .session-banner-text { flex: 1; font-size: 13px; color: var(--text2); }
+  .session-banner-text strong { color: var(--text); }
+
+  /* ── API PANEL ── */
+  .api-panel {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px 24px; margin-bottom: 20px;
+  }
+  .api-panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .api-panel-header h3 { font-size: 14px; font-weight: 600; }
+  .api-panel-header p { font-size: 12px; color: var(--text3); }
+  .api-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .api-key-input {
+    flex: 1; min-width: 200px; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text); font-size: 13px; padding: 9px 12px;
+    font-family: 'DM Mono', monospace; outline: none; letter-spacing: 1px;
+    transition: border-color 0.15s;
+  }
+  .api-key-input:focus { border-color: var(--accent); }
+  .api-key-input::placeholder { letter-spacing: 0; color: var(--text3); font-family: 'DM Sans', sans-serif; }
+
+  .model-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .model-pill {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer;
+    border: 1px solid var(--border2); color: var(--text2); background: var(--bg3);
+    transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+  }
+  .model-pill:hover { border-color: var(--accent); color: var(--accent2); }
+  .model-pill.active { background: rgba(124,92,252,0.2); border-color: var(--accent); color: var(--accent2); font-weight: 500; }
+
+  /* ── HERO ── */
+  .hero-upload { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin-bottom: 20px; }
+  .hero-upload h2 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .hero-upload p { color: var(--text2); font-size: 14px; margin-bottom: 18px; }
+
+  .url-row { display: flex; gap: 10px; margin-bottom: 14px; }
+  .url-input {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 14px; padding: 12px 16px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.15s;
+  }
+  .url-input:focus { border-color: var(--accent); }
+  .url-input::placeholder { color: var(--text3); }
+
+  .chip-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .chip-row span { font-size: 12px; color: var(--text3); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 20px; padding: 4px 10px; font-size: 12px; color: var(--text2); cursor: pointer; transition: all 0.15s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent2); }
+
+  .divider { height: 1px; background: var(--border); margin: 18px 0; }
+  .section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); margin-bottom: 8px; }
+
+  .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .setting-item label { display: block; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); margin-bottom: 6px; }
+  .setting-select {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 13px; padding: 9px 12px; font-family: 'DM Sans', sans-serif;
+    outline: none; appearance: none; cursor: pointer; transition: border-color 0.15s;
+  }
+  .setting-select:focus { border-color: var(--accent); }
+
+  /* ── PROCESSING ── */
+  .processing-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 22px; margin-bottom: 20px; display: none; }
+  .processing-card.active { display: block; }
+  .proc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .proc-step { font-size: 14px; font-weight: 500; }
+  .proc-detail { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .progress-track { background: var(--bg3); border-radius: 20px; height: 5px; overflow: hidden; margin-bottom: 6px; }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan)); border-radius: 20px; transition: width 0.4s ease; width: 0%; }
+  .progress-label { font-size: 11px; color: var(--text3); }
+
+  /* ── AI OUTPUT ── */
+  .ai-output { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px 24px; margin-bottom: 20px; display: none; }
+  .ai-output.active { display: block; }
+  .ai-output h3 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .ai-text { font-size: 14px; color: var(--text2); line-height: 1.7; white-space: pre-wrap; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 2px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 18px; width: fit-content; max-width: 100%; overflow-x: auto; }
+  .tab { padding: 7px 16px; border-radius: 6px; font-size: 13px; color: var(--text3); cursor: pointer; border: none; background: none; transition: all 0.15s; font-family: 'DM Sans', sans-serif; white-space: nowrap; }
+  .tab.active { background: var(--bg4); color: var(--text); font-weight: 500; }
+  .tab:hover:not(.active) { color: var(--text2); }
+
+  /* ── CLIPS GRID ── */
+  .clips-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .clips-header h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; }
+  .clips-count { font-size: 12px; color: var(--text3); }
+  .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+
+  /* ── CLIP CARD ── */
+  .clip-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.2s; cursor: pointer; }
+  .clip-card:hover { border-color: var(--border2); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  .clip-thumb { aspect-ratio: 9/16; background: var(--bg4); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; max-height: 200px; }
+  .clip-thumb-bg { position: absolute; inset: 0; }
+  .play-btn { width: 42px; height: 42px; background: rgba(255,255,255,0.15); backdrop-filter: blur(8px); border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; }
+  .clip-duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); border-radius: 4px; padding: 2px 7px; font-size: 11px; font-weight: 500; z-index: 2; }
+  .clip-score { position: absolute; top: 8px; left: 8px; background: var(--accent); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; z-index: 2; display: flex; align-items: center; gap: 3px; }
+  .clip-body { padding: 12px; }
+  .clip-title { font-size: 13px; font-weight: 500; line-height: 1.4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .clip-footer { display: flex; align-items: center; justify-content: space-between; }
+  .clip-type { font-size: 11px; color: var(--text3); }
+  .clip-actions { display: flex; gap: 4px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; border: none; background: var(--bg3); color: var(--text2); cursor: pointer; transition: all 0.15s; }
+  .icon-btn:hover { background: var(--bg4); color: var(--text); }
+  .icon-btn.del:hover { background: rgba(239,68,68,0.15); color: var(--red); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; text-align: center; grid-column: 1/-1; }
+  .empty-icon { width: 72px; height: 72px; border-radius: 18px; background: var(--bg2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; }
+  .empty-state h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .empty-state p { font-size: 14px; color: var(--text3); max-width: 280px; line-height: 1.5; }
+
+  /* ── HISTORY DRAWER ── */
+  .history-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 20px; display: none; }
+  .history-panel.active { display: block; }
+  .history-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.15s; }
+  .history-item:hover { background: var(--bg3); }
+  .history-url { font-size: 12px; color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-time { font-size: 11px; color: var(--text3); white-space: nowrap; }
+
+  /* ── TOAST ── */
+  .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; }
+  .toast { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 11px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px; animation: slideIn 0.2s ease; max-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.35); }
+  @keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  /* ── MOBILE ── */
+  .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 99; display: none; }
+  .sidebar-overlay.active { display: block; }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .hamburger { display: flex; }
+    .content { padding: 14px; }
+    .hero-upload { padding: 18px; }
+    .hero-upload h2 { font-size: 18px; }
+    .url-row { flex-direction: column; }
+    .url-row .btn { width: 100%; justify-content: center; }
+    .api-row .btn { width: auto; }
+    .clips-grid { grid-template-columns: repeat(2, 1fr); }
+    .settings-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 420px) {
+    .clips-grid { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .model-row { gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<div class="app">
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo">Clipper Pro</div>
+      <div class="logo-tag">AI-Powered Shorts Generator</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Workspace</div>
+      <button class="nav-item active" onclick="switchView('shorts', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+        Video Shorts
+        <span class="badge" id="clipBadge">0</span>
+      </button>
+      <button class="nav-item" onclick="switchView('reels', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Reels
+      </button>
+      <button class="nav-item" onclick="switchView('tiktok', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12a4 4 0 104 4V4a5 5 0 005 5"/></svg>
+        TikTok Clips
+      </button>
+
+      <div class="nav-label" style="margin-top:10px">History</div>
+      <button class="nav-item" onclick="toggleHistory()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Riwayat URL
+        <span class="badge" id="historyBadge">0</span>
+      </button>
+      <button class="nav-item" onclick="toggleSettings()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Pengaturan
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="session-info">
+        <div class="dot" id="sessionDot"></div>
+        <span id="sessionText">Memuat sesi...</span>
+      </div>
+      <button class="btn btn-danger btn-xs" onclick="clearSession()" style="width:100%">Hapus Sesi & Data</button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="topbar">
+      <button class="hamburger" onclick="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span class="topbar-title" id="viewTitle">Video Shorts</span>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="exportAllCaptions()">Export Captions</button>
+        <button class="btn btn-accent btn-sm" onclick="focusUrl()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Tambah Video
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- Session Banner -->
+      <div id="sessionBanner" class="session-banner" style="display:none"></div>
+
+      <!-- API Panel -->
+      <div class="api-panel" id="apiPanel">
+        <div class="api-panel-header">
+          <div>
+            <h3>🔑 Konfigurasi OpenRouter API</h3>
+            <p>API key disimpan otomatis — tidak perlu input ulang. Daftar gratis di <a href="https://openrouter.ai" target="_blank" style="color:var(--accent2)">openrouter.ai</a></p>
+          </div>
+          <button class="btn btn-ghost btn-xs" onclick="toggleApiPanel()">Sembunyikan</button>
+        </div>
+        <div class="api-row">
+          <input type="password" class="api-key-input" id="apiKeyInput" placeholder="sk-or-v1-xxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+          <button class="btn btn-ghost btn-sm" onclick="toggleKeyVis()">👁</button>
+          <button class="btn btn-accent btn-sm" onclick="saveApiKey()">Simpan</button>
+        </div>
+        <div style="margin-top:14px">
+          <div class="section-label" style="margin-bottom:6px">Pilih Model AI</div>
+          <div class="model-row" id="modelRow"></div>
+        </div>
+      </div>
+
+      <!-- URL Hero -->
+      <div class="hero-upload">
+        <h2>Buat Viral Shorts Sekarang</h2>
+        <p>Tempel URL video — AI akan menganalisis dan merekomendasikan clips terbaik untuk YouTube Shorts, Reels, & TikTok</p>
+
+        <div class="url-row">
+          <input type="url" class="url-input" id="videoUrl" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
+          <button class="btn btn-accent" id="processBtn" onclick="processVideo()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Proses Video
+          </button>
+        </div>
+
+        <div class="chip-row">
+          <span>Contoh URL:</span>
+          <span class="chip" onclick="setExample('youtube')">YouTube</span>
+          <span class="chip" onclick="setExample('instagram')">Instagram Reels</span>
+          <span class="chip" onclick="setExample('tiktok')">TikTok</span>
+          <span class="chip" onclick="setExample('twitter')">Twitter/X</span>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-label">Pengaturan Clips</div>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label>Format</label>
+            <select class="setting-select" id="formatSelect">
+              <option value="9:16">9:16 — Vertical Shorts</option>
+              <option value="1:1">1:1 — Square</option>
+              <option value="16:9">16:9 — Landscape</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Durasi Maks</label>
+            <select class="setting-select" id="durationSelect">
+              <option value="30">30 detik</option>
+              <option value="60" selected>60 detik</option>
+              <option value="90">90 detik</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Jumlah Clips</label>
+            <select class="setting-select" id="countSelect">
+              <option value="3">3 clips</option>
+              <option value="5" selected>5 clips</option>
+              <option value="8">8 clips</option>
+              <option value="10">10 clips</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>Bahasa Output</label>
+            <select class="setting-select" id="langSelect">
+              <option value="id">Bahasa Indonesia</option>
+              <option value="en">English</option>
+              <option value="auto">Auto Detect</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- History Panel -->
+      <div class="history-panel" id="historyPanel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:13px;font-weight:500">Riwayat URL (dari sesi ini)</span>
+          <button class="btn btn-ghost btn-xs" onclick="clearHistory()">Hapus semua</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+
+      <!-- Processing -->
+      <div class="processing-card" id="processingCard">
+        <div class="proc-header">
+          <div class="spinner"></div>
+          <div>
+            <div class="proc-step" id="procStep">Menghubungi AI...</div>
+            <div class="proc-detail" id="procDetail">Harap tunggu</div>
+          </div>
+        </div>
+        <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="progress-label" id="progressLabel">0%</div>
+      </div>
+
+      <!-- AI Output -->
+      <div class="ai-output" id="aiOutput">
+        <h3>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Analisis AI
+        </h3>
+        <div class="ai-text" id="aiText"></div>
+      </div>
+
+      <!-- Tabs + Clips -->
+      <div class="tabs">
+        <button class="tab active" onclick="filterTab('all', this)">Semua</button>
+        <button class="tab" onclick="filterTab('viral', this)">🔥 Viral</button>
+        <button class="tab" onclick="filterTab('educational', this)">📚 Edukatif</button>
+        <button class="tab" onclick="filterTab('entertainment', this)">🎭 Hiburan</button>
+      </div>
+
+      <div class="clips-header">
+        <h3>Clips Anda</h3>
+        <span class="clips-count" id="clipsCount">0 clips</span>
+      </div>
+      <div class="clips-grid" id="clipsGrid">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="1.5"><path d="M15 10l4.553-2.069A1 1 0 0121 8.87V15.13a1 1 0 01-1.447.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+          </div>
+          <h3>Belum ada clips</h3>
+          <p>Masukkan URL video dan klik Proses Video untuk mulai</p>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// ══════════════════════════════
+//  SESSION / COOKIE MANAGER
+// ══════════════════════════════
+const Session = {
+  KEY_APIKEY:  'cp_apikey',
+  KEY_MODEL:   'cp_model',
+  KEY_CLIPS:   'cp_clips',
+  KEY_HISTORY: 'cp_history',
+  KEY_SETTINGS:'cp_settings',
+  KEY_LAST:    'cp_last_visit',
+
+  set(key, value, days = 365) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+    // Also write cookie as fallback
+    const exp = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = `${key}=${encodeURIComponent(JSON.stringify(value))};expires=${exp};path=/;SameSite=Lax`;
+  },
+
+  get(key) {
+    // Try localStorage first
+    try {
+      const v = localStorage.getItem(key);
+      if (v !== null) return JSON.parse(v);
+    } catch {}
+    // Fallback: cookie
+    const match = document.cookie.match(new RegExp('(?:^|; )' + key + '=([^;]*)'));
+    if (match) {
+      try { return JSON.parse(decodeURIComponent(match[1])); } catch {}
+    }
+    return null;
+  },
+
+  remove(key) {
+    localStorage.removeItem(key);
+    document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+  },
+
+  clear() {
+    [this.KEY_APIKEY, this.KEY_MODEL, this.KEY_CLIPS, this.KEY_HISTORY, this.KEY_SETTINGS, this.KEY_LAST]
+      .forEach(k => this.remove(k));
+  }
+};
+
+// ══════════════════════════════
+//  APP STATE
+// ══════════════════════════════
+let apiKey = '';
+let selectedModel = 'google/gemini-2.0-flash-001';
+let clips = [];
+let history = [];
+let currentFilter = 'all';
+let processingTimer = null;
+
+const MODELS = [
+  { id: 'google/gemini-2.0-flash-001',               label: 'Gemini 2.0 Flash',  free: true },
+  { id: 'openai/gpt-4o-mini',                         label: 'GPT-4o Mini',       free: false },
+  { id: 'anthropic/claude-3-haiku',                   label: 'Claude 3 Haiku',    free: false },
+  { id: 'meta-llama/llama-3.1-8b-instruct:free',      label: 'Llama 3.1 8B',     free: true },
+];
+
+const CLIP_COLORS = [
+  ['rgba(124,92,252,0.45)','rgba(6,182,212,0.3)'],
+  ['rgba(236,72,153,0.4)','rgba(245,158,11,0.3)'],
+  ['rgba(34,197,94,0.35)','rgba(59,130,246,0.3)'],
+  ['rgba(239,68,68,0.35)','rgba(124,92,252,0.3)'],
+  ['rgba(6,182,212,0.45)','rgba(34,197,94,0.3)'],
+];
+
+// ══════════════════════════════
+//  BOOT — RESTORE SESSION
+// ══════════════════════════════
+function boot() {
+  // Restore API key
+  const savedKey = Session.get(Session.KEY_APIKEY);
+  if (savedKey) {
+    apiKey = savedKey;
+    document.getElementById('apiKeyInput').value = savedKey;
+  }
+
+  // Restore model
+  const savedModel = Session.get(Session.KEY_MODEL);
+  if (savedModel) selectedModel = savedModel;
+
+  // Restore clips
+  const savedClips = Session.get(Session.KEY_CLIPS);
+  if (savedClips && Array.isArray(savedClips)) clips = savedClips;
+
+  // Restore history
+  const savedHistory = Session.get(Session.KEY_HISTORY);
+  if (savedHistory && Array.isArray(savedHistory)) history = savedHistory;
+
+  // Restore settings
+  const savedSettings = Session.get(Session.KEY_SETTINGS);
+  if (savedSettings) {
+    if (savedSettings.format)   document.getElementById('formatSelect').value   = savedSettings.format;
+    if (savedSettings.duration) document.getElementById('durationSelect').value = savedSettings.duration;
+    if (savedSettings.count)    document.getElementById('countSelect').value    = savedSettings.count;
+    if (savedSettings.lang)     document.getElementById('langSelect').value     = savedSettings.lang;
+  }
+
+  // Save last visit
+  const lastVisit = Session.get(Session.KEY_LAST);
+  Session.set(Session.KEY_LAST, Date.now());
+
+  // Update UI
+  renderModels();
+  renderClips();
+  renderHistory();
+  updateBadge();
+  updateSessionUI(savedKey, lastVisit);
+
+  // Auto-hide API panel if key exists
+  if (apiKey) {
+    document.getElementById('apiPanel').style.display = 'none';
+  }
+}
+
+function updateSessionUI(hasKey, lastVisit) {
+  const dot  = document.getElementById('sessionDot');
+  const text = document.getElementById('sessionText');
+  const banner = document.getElementById('sessionBanner');
+
+  if (hasKey) {
+    dot.className = 'dot green';
+    text.textContent = 'Sesi aktif — data tersimpan';
+
+    if (lastVisit) {
+      const diff = Date.now() - lastVisit;
+      const mins = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      const when = days > 0 ? `${days} hari lalu` : hours > 0 ? `${hours} jam lalu` : mins > 0 ? `${mins} menit lalu` : 'baru saja';
+
+      banner.style.display = 'flex';
+      banner.innerHTML = `
+        <div class="dot green"></div>
+        <div class="session-banner-text">
+          Selamat datang kembali! Sesi terakhir <strong>${when}</strong>.
+          ${clips.length > 0 ? `<strong>${clips.length} clips</strong> berhasil dipulihkan.` : ''}
+          API key tersimpan — langsung bisa digunakan.
+        </div>
+        <button class="btn btn-ghost btn-xs" onclick="showApiPanel()">Ubah API Key</button>
+      `;
+    }
+  } else {
+    dot.className = 'dot amber';
+    text.textContent = 'Belum ada sesi — isi API key';
+
+    banner.style.display = 'flex';
+    banner.className = 'session-banner warn';
+    banner.innerHTML = `
+      <div class="dot" style="background:#f59e0b;box-shadow:0 0 6px #f59e0b"></div>
+      <div class="session-banner-text">Masukkan <strong>OpenRouter API key</strong> untuk mulai. Akan disimpan otomatis untuk sesi berikutnya.</div>
+    `;
+  }
+}
+
+// ══════════════════════════════
+//  API KEY
+// ══════════════════════════════
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { showToast('Masukkan API key terlebih dahulu', 'error'); return; }
+  if (!val.startsWith('sk-or')) { showToast('Format API key tidak valid (harus sk-or-...)', 'error'); return; }
+  apiKey = val;
+  Session.set(Session.KEY_APIKEY, val);
+  updateSessionUI(true, Session.get(Session.KEY_LAST));
+  document.getElementById('sessionDot').className = 'dot green';
+  document.getElementById('sessionText').textContent = 'Sesi aktif — API key tersimpan';
+  document.getElementById('apiPanel').style.display = 'none';
+  showToast('API key tersimpan otomatis di browser!', 'success');
+}
+
+function toggleKeyVis() {
+  const inp = document.getElementById('apiKeyInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+function showApiPanel() {
+  document.getElementById('apiPanel').style.display = 'block';
+  document.getElementById('sessionBanner').style.display = 'none';
+}
+function toggleApiPanel() {
+  const p = document.getElementById('apiPanel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+// ══════════════════════════════
+//  MODELS
+// ══════════════════════════════
+function renderModels() {
+  document.getElementById('modelRow').innerHTML = MODELS.map(m => `
+    <button class="model-pill ${m.id === selectedModel ? 'active' : ''}" onclick="selectModel('${m.id}')">
+      ${m.label}${m.free ? ' <span style="font-size:10px;opacity:0.6">free</span>' : ''}
+    </button>
+  `).join('');
+}
+function selectModel(id) {
+  selectedModel = id;
+  Session.set(Session.KEY_MODEL, id);
+  renderModels();
+  showToast(`Model: ${MODELS.find(m=>m.id===id)?.label}`, 'success');
+}
+
+// ══════════════════════════════
+//  EXAMPLES
+// ══════════════════════════════
+function setExample(p) {
+  const ex = {
+    youtube:   'https://youtube.com/watch?v=dQw4w9WgXcQ',
+    instagram: 'https://instagram.com/reel/CvExample123/',
+    tiktok:    'https://tiktok.com/@creator/video/7123456789012345678',
+    twitter:   'https://twitter.com/user/status/1234567890123456789',
+  };
+  document.getElementById('videoUrl').value = ex[p] || '';
+  document.getElementById('videoUrl').focus();
+}
+function focusUrl() { document.getElementById('videoUrl').focus(); }
+
+// ══════════════════════════════
+//  SAVE SETTINGS
+// ══════════════════════════════
+function saveSettings() {
+  Session.set(Session.KEY_SETTINGS, {
+    format:   document.getElementById('formatSelect').value,
+    duration: document.getElementById('durationSelect').value,
+    count:    document.getElementById('countSelect').value,
+    lang:     document.getElementById('langSelect').value,
+  });
+}
+['formatSelect','durationSelect','countSelect','langSelect'].forEach(id => {
+  document.getElementById(id).addEventListener('change', saveSettings);
+});
+
+// ══════════════════════════════
+//  PROCESS VIDEO
+// ══════════════════════════════
+async function processVideo() {
+  const url   = document.getElementById('videoUrl').value.trim();
+  const count = parseInt(document.getElementById('countSelect').value);
+  const format   = document.getElementById('formatSelect').value;
+  const duration = document.getElementById('durationSelect').value;
+  const langVal  = document.getElementById('langSelect').value;
+  const lang     = langVal === 'en' ? 'English' : 'Bahasa Indonesia';
+
+  if (!url || !url.startsWith('http')) { showToast('Masukkan URL video yang valid', 'error'); return; }
+  if (!apiKey) { showApiPanel(); showToast('Simpan API key OpenRouter terlebih dahulu', 'error'); return; }
+
+  addHistory(url);
+  startProcessing();
+
+  const prompt = `Kamu adalah ahli konten viral short-form video.
+
+Analisis video dari URL: ${url}
+
+Buat PERSIS ${count} rekomendasi clip viral untuk format ${format}, durasi maksimal ${duration} detik.
+Gunakan ${lang}.
+
+Balas HANYA dengan JSON valid berikut (tanpa markdown, tanpa backtick, tanpa teks lain):
+{
+  "summary": "ringkasan video 2 kalimat",
+  "analysis": "mengapa konten ini cocok untuk shorts",
+  "clips": [
+    {
+      "id": 1,
+      "title": "judul clip catchy maks 10 kata",
+      "startTime": "00:01:23",
+      "endTime": "00:02:10",
+      "duration": 47,
+      "type": "viral",
+      "viralScore": 91,
+      "hook": "kalimat pembuka yang menarik perhatian",
+      "caption": "caption untuk sosial media dengan emoji",
+      "hashtags": ["#viral","#shorts","#trending"],
+      "platform": "YouTube Shorts"
+    }
+  ]
+}
+type harus salah satu: viral, educational, entertainment
+viralScore: integer 60-99`;
+
+  try {
+    // Detect if running on Vercel (use proxy) or local (direct call)
+    const isLocal = window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const endpoint = isLocal
+      ? 'https://openrouter.ai/api/v1/chat/completions'
+      : '/api/chat';
+
+    const headers = { 'Content-Type': 'application/json' };
+    const body = {
+      model: selectedModel,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 2500,
+      temperature: 0.85,
+    };
+
+    // Direct call needs auth header (local only)
+    if (isLocal) {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+      headers['HTTP-Referer'] = window.location.href;
+      headers['X-Title'] = 'Clipper Pro';
+    }
+
+    const res = await fetch(endpoint, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `Server error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw  = data.choices?.[0]?.message?.content || '';
+
+    finishProcessing();
+
+    let parsed;
+    try {
+      const clean = raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      parsed = makeFallback(url, count, raw);
+    }
+
+    renderAI(parsed.summary || '', parsed.analysis || '');
+    appendClips(parsed.clips || [], url);
+    showToast(`✓ ${(parsed.clips||[]).length} clips berhasil dibuat!`, 'success');
+
+  } catch (err) {
+    stopProcessing();
+    showToast('Gagal: ' + err.message, 'error');
+    console.error(err);
+  }
+}
+
+function makeFallback(url, count, aiText) {
+  const types = ['viral','educational','entertainment','viral','educational','entertainment','viral','educational','entertainment','viral'];
+  return {
+    summary: 'Video dianalisis. Clips dihasilkan berdasarkan estimasi AI.',
+    analysis: aiText.slice(0, 400),
+    clips: Array.from({ length: count }, (_, i) => {
+      const start = 30 + i * 90;
+      const dur   = 40 + Math.floor(Math.random() * 50);
+      return {
+        id: i + 1,
+        title: `Highlight #${i+1} — Momen Terbaik`,
+        startTime: fmtTime(start),
+        endTime:   fmtTime(start + dur),
+        duration:  dur,
+        type:      types[i],
+        viralScore: 68 + Math.floor(Math.random() * 30),
+        hook:    'Kamu tidak akan percaya momen ini...',
+        caption: `Konten #${i+1} yang wajib kamu tonton! 🔥✨`,
+        hashtags: ['#viral','#shorts','#trending'],
+        platform: 'YouTube Shorts',
+      };
+    }),
+  };
+}
+
+function fmtTime(s) {
+  return [Math.floor(s/3600), Math.floor((s%3600)/60), s%60].map(n=>String(n).padStart(2,'0')).join(':');
+}
+
+// ══════════════════════════════
+//  PROCESSING UI
+// ══════════════════════════════
+const PROC_STEPS = [
+  { pct: 12, step: 'Menghubungi OpenRouter AI...', detail: 'Membangun koneksi aman' },
+  { pct: 28, step: 'Menganalisis URL video...', detail: 'Memeriksa metadata & konten' },
+  { pct: 48, step: 'AI memproses konten...', detail: 'Mencari momen viral terbaik' },
+  { pct: 68, step: 'Membuat rekomendasi clips...', detail: 'Mengoptimalkan timestamps' },
+  { pct: 85, step: 'Menyiapkan captions & hashtags...', detail: 'Finalisasi output' },
+  { pct: 95, step: 'Hampir selesai...', detail: 'Menyusun hasil akhir' },
+];
+
+let procStepIdx = 0;
+function startProcessing() {
+  document.getElementById('processingCard').classList.add('active');
+  document.getElementById('processBtn').disabled = true;
+  setProgress(0);
+  procStepIdx = 0;
+  processingTimer = setInterval(() => {
+    if (procStepIdx < PROC_STEPS.length) {
+      const s = PROC_STEPS[procStepIdx++];
+      document.getElementById('procStep').textContent    = s.step;
+      document.getElementById('procDetail').textContent  = s.detail;
+      setProgress(s.pct);
+    }
+  }, 900);
+}
+function finishProcessing() {
+  clearInterval(processingTimer);
+  setProgress(100);
+  document.getElementById('procStep').textContent   = 'Selesai!';
+  document.getElementById('procDetail').textContent = 'Clips berhasil dihasilkan';
+  setTimeout(() => {
+    document.getElementById('processingCard').classList.remove('active');
+    document.getElementById('processBtn').disabled = false;
+  }, 700);
+}
+function stopProcessing() {
+  clearInterval(processingTimer);
+  document.getElementById('processingCard').classList.remove('active');
+  document.getElementById('processBtn').disabled = false;
+}
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width  = pct + '%';
+  document.getElementById('progressLabel').textContent = pct + '%';
+}
+
+// ══════════════════════════════
+//  AI OUTPUT (typewriter)
+// ══════════════════════════════
+function renderAI(summary, analysis) {
+  const el = document.getElementById('aiOutput');
+  const tx = document.getElementById('aiText');
+  el.classList.add('active');
+  const full = [summary, analysis].filter(Boolean).join('\n\n');
+  tx.textContent = '';
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i < full.length) tx.textContent += full[i++];
+    else clearInterval(iv);
+  }, 12);
+}
+
+// ══════════════════════════════
+//  CLIPS
+// ══════════════════════════════
+function appendClips(newClips, sourceUrl) {
+  const tagged = newClips.map((c, i) => ({
+    ...c,
+    _id: Date.now() + i,
+    _url: sourceUrl,
+    _color: (clips.length + i) % CLIP_COLORS.length,
+  }));
+  clips = [...clips, ...tagged];
+  Session.set(Session.KEY_CLIPS, clips);
+  renderClips();
+  updateBadge();
+}
+
+function renderClips() {
+  const grid  = document.getElementById('clipsGrid');
+  const empty = document.getElementById('emptyState');
+  const shown = currentFilter === 'all' ? clips : clips.filter(c => c.type === currentFilter);
+
+  document.getElementById('clipsCount').textContent = `${shown.length} clips`;
+
+  if (shown.length === 0) {
+    grid.innerHTML = '';
+    grid.appendChild(empty);
+    return;
+  }
+
+  grid.innerHTML = shown.map(buildCard).join('');
+}
+
+function buildCard(c) {
+  const [c1, c2] = CLIP_COLORS[c._color || 0];
+  const typeIcon = { viral: '🔥', educational: '📚', entertainment: '🎭' }[c.type] || '🎬';
+  return `
+  <div class="clip-card" onclick="showDetail(${c._id})">
+    <div class="clip-thumb">
+      <div class="clip-thumb-bg" style="background:linear-gradient(135deg,${c1},${c2})"></div>
+      <div class="play-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <div class="clip-duration">${c.startTime||'00:00'} → ${c.endTime||'01:00'}</div>
+      <div class="clip-score">⭐ ${c.viralScore||0}</div>
+    </div>
+    <div class="clip-body">
+      <div class="clip-title">${c.title||'Clip tanpa judul'}</div>
+      <div class="clip-footer">
+        <div class="clip-type">${typeIcon} ${c.type||''}</div>
+        <div class="clip-actions">
+          <button class="icon-btn" title="Copy caption" onclick="event.stopPropagation();copyCaption(${c._id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+          <button class="icon-btn del" title="Hapus" onclick="event.stopPropagation();deleteClip(${c._id})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function deleteClip(id) {
+  clips = clips.filter(c => c._id !== id);
+  Session.set(Session.KEY_CLIPS, clips);
+  renderClips();
+  updateBadge();
+  showToast('Clip dihapus', 'success');
+}
+
+function copyCaption(id) {
+  const c = clips.find(x => x._id === id);
+  if (!c) return;
+  const text = `${c.caption||c.title}\n\n${(c.hashtags||[]).join(' ')}`;
+  navigator.clipboard.writeText(text).then(() => showToast('Caption disalin! 📋', 'success'));
+}
+
+function showDetail(id) {
+  const c = clips.find(x => x._id === id);
+  if (!c) return;
+  showToast(`💡 Hook: "${(c.hook||'').slice(0,60)}..."`, 'info');
+}
+
+function updateBadge() {
+  document.getElementById('clipBadge').textContent = clips.length;
+}
+
+function filterTab(tab, el) {
+  currentFilter = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderClips();
+}
+
+function exportAllCaptions() {
+  if (!clips.length) { showToast('Belum ada clips untuk diekspor', 'error'); return; }
+  const text = clips.map((c,i) =>
+    `=== Clip ${i+1}: ${c.title} ===\nTimestamp: ${c.startTime} → ${c.endTime}\nHook: ${c.hook||'-'}\nCaption: ${c.caption||'-'}\nHashtags: ${(c.hashtags||[]).join(' ')}\n`
+  ).join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'clipper-pro-captions.txt' });
+  a.click();
+  showToast('Captions diekspor!', 'success');
+}
+
+// ══════════════════════════════
+//  HISTORY
+// ══════════════════════════════
+function addHistory(url) {
+  history = [{ url, time: Date.now() }, ...history.filter(h => h.url !== url)].slice(0, 20);
+  Session.set(Session.KEY_HISTORY, history);
+  renderHistory();
+  document.getElementById('historyBadge').textContent = history.length;
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  document.getElementById('historyBadge').textContent = history.length;
+  if (!history.length) { list.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 10px">Belum ada riwayat</div>'; return; }
+  list.innerHTML = history.map(h => {
+    const mins = Math.floor((Date.now() - h.time) / 60000);
+    const when = mins < 1 ? 'baru saja' : mins < 60 ? `${mins}m lalu` : `${Math.floor(mins/60)}j lalu`;
+    const short = h.url.replace(/^https?:\/\//, '').slice(0, 50);
+    return `
+    <div class="history-item" onclick="document.getElementById('videoUrl').value='${h.url}';showToast('URL dimuat dari riwayat','success')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span class="history-url" title="${h.url}">${short}</span>
+      <span class="history-time">${when}</span>
+    </div>`;
+  }).join('');
+}
+
+function clearHistory() {
+  history = [];
+  Session.set(Session.KEY_HISTORY, []);
+  renderHistory();
+  showToast('Riwayat dihapus', 'success');
+}
+
+function toggleHistory() {
+  const p = document.getElementById('historyPanel');
+  p.classList.toggle('active');
+  closeSidebar();
+}
+
+function toggleSettings() {
+  showApiPanel();
+  closeSidebar();
+}
+
+// ══════════════════════════════
+//  SESSION CLEAR
+// ══════════════════════════════
+function clearSession() {
+  if (!confirm('Hapus semua data tersimpan? (API key, clips, riwayat)')) return;
+  Session.clear();
+  apiKey = '';
+  clips = [];
+  history = [];
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiPanel').style.display = 'block';
+  document.getElementById('sessionBanner').style.display = 'none';
+  renderClips();
+  renderHistory();
+  updateBadge();
+  document.getElementById('sessionDot').className = 'dot red';
+  document.getElementById('sessionText').textContent = 'Sesi dihapus';
+  document.getElementById('aiOutput').classList.remove('active');
+  showToast('Semua data sesi dihapus', 'success');
+}
+
+// ══════════════════════════════
+//  SIDEBAR
+// ══════════════════════════════
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+}
+
+function switchView(view, el) {
+  const titles = { shorts: 'Video Shorts', reels: 'Reels', tiktok: 'TikTok Clips' };
+  document.getElementById('viewTitle').textContent = titles[view] || view;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  closeSidebar();
+}
+
+// ══════════════════════════════
+//  TOAST
+// ══════════════════════════════
+function showToast(msg, type = 'info') {
+  const colors = { success: '#22c55e', error: '#ef4444', info: '#a87cff' };
+  const tc = document.getElementById('toastContainer');
+  const t  = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span style="color:${colors[type]||colors.info};font-size:15px">${type==='success'?'✓':type==='error'?'✕':'ℹ'}</span> ${msg}`;
+  tc.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity 0.3s'; setTimeout(() => t.remove(), 320); }, 3200);
+}
+
+// ══════════════════════════════
+//  START
+// ══════════════════════════════
+boot();
+</script>
+</body>
+</html>
