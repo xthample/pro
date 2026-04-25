@@ -4,77 +4,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clipper Pro V4 — Universal AI Scout</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d0d12; --bg2: #16161e; --bg3: #1f1f29;
+            --accent: #8b5cf6; --accent2: #a78bfa;
+            --text: #ffffff; --text-dim: #9ca3af;
+            --border: rgba(255,255,255,0.08);
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); padding: 20px; line-height: 1.5; }
+        
+        .app { display: flex; min-height: 100vh; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 260px; flex-shrink: 0; background: var(--bg2); border-radius: var(--radius); padding: 20px; height: fit-content; border: 1px solid var(--border); }
+        .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--accent2); margin-bottom: 30px; text-align: center; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 10px; cursor: pointer; color: var(--text2); font-size: 14px; border: 1px solid transparent; background: none; width: 100%; text-align: left; transition: 0.3s; margin-bottom: 10px; }
+        .nav-item:hover { background: var(--bg3); border-color: var(--border); }
+        .nav-item.active { background: rgba(139, 92, 246, 0.1); color: var(--accent2); border-color: var(--accent); }
+
+        /* MAIN */
+        .main { flex: 1; }
+        .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 25px; margin-bottom: 20px; }
+        .input-group { display: flex; gap: 12px; margin: 20px 0; }
+        input, select { flex: 1; background: var(--bg3); border: 1px solid var(--border); color: white; padding: 14px; border-radius: 10px; outline: none; }
+        .btn { background: var(--accent); color: white; border: none; padding: 14px 28px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: 0.3s; }
+        .btn:hover { background: var(--accent2); transform: translateY(-2px); }
+
+        /* GRID */
+        .clips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .clip-card { background: var(--bg3); border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); transition: 0.3s; }
+        .video-container { aspect-ratio: 9/16; background: #000; width: 100%; }
+        .clip-info { padding: 20px; }
+        .badge-seo { font-size: 10px; background: #10b981; color: white; padding: 3px 8px; border-radius: 6px; font-weight: 800; margin-bottom: 10px; display: inline-block; }
+        .hook-box { background: rgba(139, 92, 246, 0.1); border-left: 3px solid var(--accent); padding: 10px; font-size: 13px; color: var(--accent2); border-radius: 0 6px 6px 0; margin-top: 10px; }
+
+        @media (max-width: 768px) { .app { flex-direction: column; } .sidebar { width: 100%; } }
+    </style>
 </head>
 <body>
 
-<div class="card">
-    <h2 style="font-size: 24px; margin-bottom: 5px;">🔍 Universal Content Scout</h2>
-    <p style="color: var(--text-dim); font-size: 14px;">Masukkan link YouTube apa pun (Podcast, Gaming, Edukasi, dll).</p>
-    
-    <div class="input-group">
-        <input type="url" id="videoUrl" placeholder="Tempel link YouTube di sini...">
-        <button class="btn" id="genBtn" onclick="runAI()">Analyze Content</button>
-    </div>
+<div class="app">
+    <aside class="sidebar">
+        <div class="logo">Clipper Pro</div>
+        <button class="nav-item active">🎬 Video Scout</button>
+        <button class="nav-item" onclick="toggleApi()">🔑 API Settings</button>
+        <div style="margin-top: 40px; padding: 10px; border-top: 1px solid var(--border);">
+            <button class="btn" style="width: 100%; font-size: 11px; background: #ef4444;" onclick="resetData()">Hapus Sesi</button>
+        </div>
+    </aside>
 
-    <div style="display: flex; gap: 15px; align-items: center;">
-        <select id="model" style="max-width: 300px;">
-            <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Deep Analysis)</option>
-            <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash (Fastest)</option>
-        </select>
-        <span style="font-size: 12px; color: var(--text-dim);">⏱ Durasi: 30s - 60s per clip</span>
-    </div>
+    <main class="main">
+        <section id="apiSection" class="card" style="display:none;">
+            <h3>🔑 API Configuration</h3>
+            <p style="font-size: 12px; color: var(--text-dim); margin: 10px 0;">Daftar API key gratis di OpenRouter.ai</p>
+            <div class="input-group">
+                <input type="password" id="apiKey" placeholder="sk-or-v1-...">
+                <button class="btn" onclick="saveKey()">Simpan Key</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Universal Content Scout</h2>
+            <p style="color: var(--text-dim); font-size: 14px;">Masukkan link video apa pun (Podcast, Gaming, Edukasi, dll).</p>
+            
+            <div class="input-group">
+                <input type="url" id="videoUrl" placeholder="Tempel link YouTube di sini...">
+                <button class="btn" id="genBtn" onclick="runAI()">Analyze & Clip</button>
+            </div>
+
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <select id="model">
+                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Sangat Akurat)</option>
+                    <option value="google/gemini-2.0-flash-001">Gemini 2.0 Flash (Sangat Cepat)</option>
+                </select>
+                <div style="padding: 10px; font-size: 12px; color: var(--accent2); background: rgba(139, 92, 246, 0.1); border-radius: 8px;">
+                    🎯 Target Durasi: 30s - 60s
+                </div>
+            </div>
+        </section>
+
+        <div id="status" style="display:none; text-align:center; padding: 20px; color: var(--accent2); font-weight: bold;">
+            AI sedang membedah isi video dan mencari momen hook...
+        </div>
+
+        <div class="clips-grid" id="clipsContainer"></div>
+    </main>
 </div>
-
-<div id="status" style="display:none; text-align:center; padding: 20px; color: var(--accent2); font-weight: bold;">
-    AI sedang membedah isi video dan mencari momen terbaik...
-</div>
-
-<div class="clips-grid" id="clipsContainer"></div>
 
 <script>
+    // Memuat key saat start
+    let key = localStorage.getItem('cp_apikey') || '';
+    if(!key) document.getElementById('apiSection').style.display = 'block';
+
+    function toggleApi() {
+        const s = document.getElementById('apiSection');
+        s.style.display = s.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function saveKey() {
+        const val = document.getElementById('apiKey').value.trim();
+        if(!val.startsWith('sk-or')) return alert('Format API Key salah!');
+        key = val;
+        localStorage.setItem('cp_apikey', val); // Fix nama key
+        document.getElementById('apiSection').style.display = 'none';
+        alert('API Key Berhasil Disimpan!');
+    }
+
     async function runAI() {
         const urlInput = document.getElementById('videoUrl').value;
-        
-        // FIX: Menggunakan nama key yang konsisten dengan fungsi saveApiKey (cp_apikey)
-        const key = localStorage.getItem('cp_apikey'); 
-        
-        if(!urlInput) return alert('Masukkan link YouTube dulu bro!');
-        
-        // Alert khusus jika API Key belum tersimpan
-        if(!key) {
-            showApiPanel(); // Tampilkan panel API agar user bisa isi
-            return alert('API Key belum di-set atau belum disimpan di pengaturan!');
-        }
+        if(!urlInput) return alert('Link YouTube jangan kosong bro!');
+        if(!key) { toggleApi(); return alert('Isi API Key dulu!'); }
 
         const videoId = urlInput.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/)?.[1];
-        if(!videoId) return alert('Link YouTube tidak valid!');
-        
+        if(!videoId) return alert('Link tidak valid!');
+
         const btn = document.getElementById('genBtn');
         btn.disabled = true;
         document.getElementById('status').style.display = 'block';
         const container = document.getElementById('clipsContainer');
         container.innerHTML = '';
 
-        // Prompt Universal Anti-Halusinasi
-        const prompt = `Lupakan semua topik sebelumnya. Analisis URL ini: ${urlInput}. 
+        // Universal Prompt Anti-Halusinasi
+        const prompt = `Analisis mentah video ini: ${urlInput}.
         Tugas:
-        1. Identifikasi topik ASLI video.
-        2. Cari 10 momen HOOK terkuat.
-        3. Durasi PER CLIP WAJIB 30-60 detik.
-        4. Berikan JUDUL SEO viral.
-        Format JSON: {"clips": [{"title": "...", "start": 10, "end": 55, "hook_reason": "..."}]}`;
+        1. Identifikasi topik ASLI video (Jangan menebak topik lain).
+        2. Cari 10 momen dengan HOOK paling kuat.
+        3. DURASI: WAJIB antara 30-60 detik per clip.
+        Format JSON: {"clips": [{"title": "Judul SEO", "s": 10, "e": 55, "hook": "Alasan momen ini menarik"}]}`;
 
         try {
-            // Deteksi jika running di Vercel atau Local
             const isLocal = window.location.hostname === 'localhost';
             const endpoint = isLocal ? 'https://openrouter.ai/api/v1/chat/completions' : '/api/chat';
 
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 
-                    'Authorization': `Bearer ${key}`, 
+                    'Authorization': `Bearer ${key}`, // Fix Authentication Header
                     'Content-Type': 'application/json' 
                 },
                 body: JSON.stringify({
@@ -84,10 +153,7 @@
                 })
             });
 
-            if (!res.ok) {
-                const errorData = await res.json();
-                throw new Error(errorData.error?.message || 'Server Error');
-            }
+            if(!res.ok) throw new Error('API ditolak. Cek saldo/key Anda.');
 
             const data = await res.json();
             const content = data.choices[0].message.content;
@@ -96,14 +162,32 @@
 
             renderClips(parsed.clips, videoId);
         } catch (e) {
-            console.error('AI Error:', e);
-            alert('Gagal memproses: ' + e.message);
+            alert('Gagal: ' + e.message);
         } finally {
             btn.disabled = false;
             document.getElementById('status').style.display = 'none';
         }
     }
-</script>
 
+    function renderClips(clips, vId) {
+        const container = document.getElementById('clipsContainer');
+        container.innerHTML = clips.map(c => `
+            <div class="clip-card">
+                <div class="video-container">
+                    <iframe width="100%" height="100%" src="https://www.youtube.com/embed/${vId}?start=${c.s}&end=${c.e}" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="clip-info">
+                    <span class="badge-seo">SEO Optimized</span>
+                    <div style="font-weight:bold; font-size:16px;">${c.title}</div>
+                    <div class="hook-box"><b>Hook:</b> ${c.hook}</div>
+                    <p style="font-size:11px; color:var(--text-dim); margin-top:10px;">⏱ Durasi: ${c.e - c.s} detik</p>
+                    <a href="https://www.ssyoutube.com/watch?v=${vId}" target="_blank" class="btn" style="display:block; text-align:center; margin-top:15px; font-size:12px; text-decoration:none;">Download Clip</a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function resetData() { if(confirm('Hapus semua data?')) { localStorage.clear(); location.reload(); } }
+</script>
 </body>
 </html>
